@@ -1,5 +1,6 @@
 
 using ITHelpdesk.Web.Data;
+using ITHelpdesk.Web.DTOs.Notifications;
 using ITHelpdesk.Web.DTOs.Tickets;
 using ITHelpdesk.Web.Models.Entities;
 using ITHelpdesk.Web.Models.Enums;
@@ -12,13 +13,59 @@ public class TicketService : ITicketService
 {
     private readonly AppDbContext _context;
     private readonly IAuditLogService _auditLogService;
+    private readonly INotificationService _notificationService;
 
     public TicketService(
         AppDbContext context,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        INotificationService notificationService)
     {
         _context = context;
         _auditLogService = auditLogService;
+        _notificationService = notificationService;
+    }
+
+    private async Task<IReadOnlyList<string>> GetActiveRoleUserIdsAsync(
+        IEnumerable<string> userIds,
+        string roleName)
+    {
+        var requestedIds = userIds
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct()
+            .ToArray();
+
+        if (requestedIds.Length == 0)
+        {
+            return Array.Empty<string>();
+        }
+
+        return await (
+            from user in _context.Users.AsNoTracking()
+            join userRole in _context.UserRoles.AsNoTracking()
+                on user.Id equals userRole.UserId
+            join role in _context.Roles.AsNoTracking()
+                on userRole.RoleId equals role.Id
+            where requestedIds.Contains(user.Id)
+                && user.IsActive
+                && user.ApprovalStatus == AccountApprovalStatus.Approved
+                && role.Name == roleName
+            select user.Id
+        ).Distinct().ToListAsync();
+    }
+
+    private async Task<IReadOnlyList<string>> GetActiveAdminIdsAsync()
+    {
+        return await (
+            from user in _context.Users.AsNoTracking()
+            join userRole in _context.UserRoles.AsNoTracking()
+                on user.Id equals userRole.UserId
+            join role in _context.Roles.AsNoTracking()
+                on userRole.RoleId equals role.Id
+            where user.IsActive
+                && user.ApprovalStatus == AccountApprovalStatus.Approved
+                && role.Name == "Admin"
+            select user.Id
+        ).Distinct().ToListAsync();
     }
 
     // ==========================================
@@ -351,6 +398,39 @@ public class TicketService : ITicketService
 
             _context.TicketStatusHistories.Add(history);
 
+            if (assignedSupport != null)
+            {
+                var supportIds = await GetActiveRoleUserIdsAsync(
+                    [assignedSupport.Id], "IT Support");
+
+                await _notificationService.CreateManyAsync(
+                    supportIds
+                    .Where(userId => userId != createdByUserId)
+                    .Select(userId => new NotificationCreateDto
+                    {
+                        UserId = userId,
+                        TicketId = ticket.Id,
+                        Type = NotificationType.TicketAssigned,
+                        Title = "Ticket assigned to you",
+                        Message = $"Ticket {ticket.TicketNumber} has been assigned to you."
+                    }));
+            }
+            else
+            {
+                var adminIds = await GetActiveAdminIdsAsync();
+                await _notificationService.CreateManyAsync(
+                    adminIds
+                    .Where(userId => userId != createdByUserId)
+                    .Select(userId => new NotificationCreateDto
+                    {
+                        UserId = userId,
+                        TicketId = ticket.Id,
+                        Type = NotificationType.TicketAssignmentPending,
+                        Title = "Ticket needs assignment",
+                        Message = $"Ticket {ticket.TicketNumber} is awaiting Admin assignment."
+                    }));
+            }
+
             var creationDescription =
                 $"User {user.FullName} created ticket " +
                 $"{ticket.TicketNumber}: {ticket.Title}. " +
@@ -471,6 +551,7 @@ public class TicketService : ITicketService
         {
             var oldTitle = ticket.Title;
             var oldCategoryId = ticket.CategoryId;
+            var oldAssignedToUserId = ticket.AssignedToUserId;
             var ticketNumber = ticket.TicketNumber;
 
             ticket.Title = dto.Title.Trim();
@@ -487,6 +568,53 @@ public class TicketService : ITicketService
                 );
 
                 ticket.AssignedToUserId = assignedSupport?.Id;
+
+                if (oldAssignedToUserId != ticket.AssignedToUserId)
+                {
+                    var notificationType = oldAssignedToUserId == null
+                        ? NotificationType.TicketAssigned
+                        : NotificationType.TicketReassigned;
+
+                    if (assignedSupport != null)
+                    {
+                        var supportIds = await GetActiveRoleUserIdsAsync(
+                            [assignedSupport.Id],
+                            "IT Support");
+                        var recipientIds = supportIds
+                            .Append(ticket.CreatedByUserId)
+                            .Where(userId => userId != updatedByUserId)
+                            .Distinct();
+
+                        await _notificationService.CreateManyAsync(
+                            recipientIds.Select(userId => new NotificationCreateDto
+                            {
+                                UserId = userId,
+                                TicketId = ticket.Id,
+                                Type = notificationType,
+                                Title = notificationType == NotificationType.TicketAssigned
+                                    ? "Ticket assigned to support"
+                                    : "Ticket reassigned",
+                                Message = notificationType == NotificationType.TicketAssigned
+                                    ? $"Ticket {ticketNumber} has been assigned to IT Support."
+                                    : $"Ticket {ticketNumber} has been reassigned to another IT Support specialist."
+                            }));
+                    }
+                    else
+                    {
+                        var pendingAdminIds = await GetActiveAdminIdsAsync();
+                        await _notificationService.CreateManyAsync(
+                            pendingAdminIds
+                            .Where(userId => userId != updatedByUserId)
+                            .Select(userId => new NotificationCreateDto
+                            {
+                                UserId = userId,
+                                TicketId = ticket.Id,
+                                Type = NotificationType.TicketAssignmentPending,
+                                Title = "Ticket needs assignment",
+                                Message = $"Ticket {ticketNumber} is awaiting Admin assignment."
+                            }));
+                    }
+                }
 
                 var assignmentDescription = assignedSupport == null
                     ? $"Ticket {ticketNumber} category changed. " +
@@ -624,6 +752,58 @@ public class TicketService : ITicketService
 
             _context.TicketComments.Add(comment);
 
+            var recipients = new HashSet<string>();
+            if (dto.IsInternal)
+            {
+                recipients.UnionWith(await GetActiveAdminIdsAsync());
+                if (!string.IsNullOrWhiteSpace(ticket.AssignedToUserId))
+                {
+                    recipients.UnionWith(await GetActiveRoleUserIdsAsync(
+                        [ticket.AssignedToUserId], "IT Support"));
+                }
+            }
+            else if (isAdmin)
+            {
+                recipients.UnionWith(await GetActiveRoleUserIdsAsync(
+                    [ticket.CreatedByUserId], "Employee"));
+                if (!string.IsNullOrWhiteSpace(ticket.AssignedToUserId))
+                {
+                    recipients.UnionWith(await GetActiveRoleUserIdsAsync(
+                        [ticket.AssignedToUserId], "IT Support"));
+                }
+            }
+            else if (isITSupport)
+            {
+                recipients.UnionWith(await GetActiveRoleUserIdsAsync(
+                    [ticket.CreatedByUserId], "Employee"));
+            }
+            else if (!string.IsNullOrWhiteSpace(ticket.AssignedToUserId))
+            {
+                recipients.UnionWith(await GetActiveRoleUserIdsAsync(
+                    [ticket.AssignedToUserId], "IT Support"));
+            }
+
+            recipients.Remove(userId);
+
+            var notificationType = dto.IsInternal
+                ? NotificationType.NewInternalNote
+                : NotificationType.NewPublicComment;
+            var notificationMessage = dto.IsInternal
+                ? $"An internal note was added to ticket {ticket.TicketNumber}."
+                : $"A public comment was added to ticket {ticket.TicketNumber}.";
+
+            await _notificationService.CreateManyAsync(
+                recipients.Select(recipientId => new NotificationCreateDto
+                {
+                    UserId = recipientId,
+                    TicketId = ticket.Id,
+                    Type = notificationType,
+                    Title = dto.IsInternal
+                        ? "New internal note"
+                        : "New public comment",
+                    Message = notificationMessage
+                }));
+
             var commentType = dto.IsInternal
                 ? "internal note"
                 : "public comment";
@@ -747,6 +927,22 @@ public class TicketService : ITicketService
             };
 
             _context.TicketStatusHistories.Add(history);
+
+            if (ticket.CreatedByUserId != changedByUserId)
+            {
+                var employeeIds = await GetActiveRoleUserIdsAsync(
+                    [ticket.CreatedByUserId], "Employee");
+
+                await _notificationService.CreateManyAsync(
+                    employeeIds.Select(userId => new NotificationCreateDto
+                    {
+                        UserId = userId,
+                        TicketId = ticket.Id,
+                        Type = NotificationType.TicketStatusChanged,
+                        Title = "Ticket status updated",
+                        Message = $"Ticket {ticketNumber} is now {newStatus}."
+                    }));
+            }
 
             // ======================================
             // AUTOMATIC PUBLIC RESOLUTION COMMENT

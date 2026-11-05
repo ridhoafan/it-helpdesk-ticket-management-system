@@ -1,0 +1,90 @@
+@model ITHelpdesk.Web.DTOs.Notifications.NotificationPageDto
+
+@{
+    ViewData["Title"] = "Notifications";
+    var unreadCount = (int)(ViewBag.UnreadCount ?? 0);
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h1 class="h3 mb-1">Notification Center</h1>
+            <p class="text-muted mb-0">@unreadCount unread notification(s)</p>
+        </div>
+        @if (unreadCount > 0)
+        {
+            <form asp-action="MarkAllAsRead" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="page" value="@Model.CurrentPage" />
+                <button type="submit" class="btn btn-outline-primary">Mark all as read</button>
+            </form>
+        }
+    </div>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="alert alert-light border">Belum ada notifikasi.</div>
+    }
+    else
+    {
+        <div class="list-group shadow-sm">
+            @foreach (var notification in Model.Items)
+            {
+                <div class="list-group-item @(notification.IsRead ? "" : "list-group-item-primary")">
+                    <div class="d-flex flex-wrap justify-content-between gap-3">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <form asp-action="Open"
+                                      asp-antiforgery="false"
+                                      method="post"
+                                      class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@notification.Id" />
+                                    <button type="submit"
+                                            class="fw-semibold text-decoration-none text-dark border-0 bg-transparent p-0 text-start">
+                                        @notification.Title
+                                    </button>
+                                </form>
+                                @if (!notification.IsRead)
+                                {
+                                    <span class="badge bg-primary">Unread</span>
+                                }
+                            </div>
+                            <p class="mb-1 mt-1">@notification.Message</p>
+                            <small class="text-muted">@notification.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</small>
+                        </div>
+                        @if (!notification.IsRead)
+                        {
+                            <form asp-action="MarkAsRead" method="post" class="align-self-center">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@notification.Id" />
+                                <input type="hidden" name="page" value="@Model.CurrentPage" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Mark as read</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="mt-4" aria-label="Notification pages">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage - 1)">Previous</a>
+                </li>
+                @for (var pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+                {
+                    <li class="page-item @(pageNumber == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@pageNumber">@pageNumber</a>
+                    </li>
+                }
+                <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage + 1)">Next</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>

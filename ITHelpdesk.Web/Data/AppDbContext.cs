@@ -30,6 +30,8 @@ public class AppDbContext
     public DbSet<ITSupportCategory> ITSupportCategories
         => Set<ITSupportCategory>();
 
+    public DbSet<Notification> Notifications => Set<Notification>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -242,6 +244,50 @@ public class AppDbContext
             .HasOne(t => t.AssignedToUser)
             .WithMany(u => u.AssignedTickets)
             .HasForeignKey(t => t.AssignedToUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ==========================================
+        // NOTIFICATION CONFIGURATION
+        // ==========================================
+
+        builder.Entity<Notification>()
+            .Property(n => n.Type)
+            .HasConversion<string>()
+            .HasMaxLength(40)
+            .IsRequired();
+
+        builder.Entity<Notification>()
+            .Property(n => n.Title)
+            .HasMaxLength(150)
+            .IsRequired();
+
+        builder.Entity<Notification>()
+            .Property(n => n.Message)
+            .HasMaxLength(500)
+            .IsRequired();
+
+        builder.Entity<Notification>()
+            .Property(n => n.IsRead)
+            .HasDefaultValue(false);
+
+        builder.Entity<Notification>()
+            .HasIndex(n => new
+            {
+                n.UserId,
+                n.IsRead,
+                n.CreatedAtUtc
+            });
+
+        builder.Entity<Notification>()
+            .HasOne(n => n.User)
+            .WithMany(u => u.Notifications)
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Notification>()
+            .HasOne(n => n.Ticket)
+            .WithMany(t => t.Notifications)
+            .HasForeignKey(n => n.TicketId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // ==========================================

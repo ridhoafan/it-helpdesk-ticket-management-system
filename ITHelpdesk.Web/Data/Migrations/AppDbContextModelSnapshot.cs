@@ -185,6 +185,53 @@ namespace ITHelpdesk.Web.Data.Migrations
                     b.ToTable("ITSupportCategories");
                 });
 
+            modelBuilder.Entity("ITHelpdesk.Web.Models.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("TicketId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketId");
+
+                    b.HasIndex("UserId", "IsRead", "CreatedAtUtc");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("ITHelpdesk.Web.Models.Entities.Ticket", b =>
                 {
                     b.Property<int>("Id")
@@ -562,6 +609,25 @@ namespace ITHelpdesk.Web.Data.Migrations
                     b.Navigation("TicketCategory");
                 });
 
+            modelBuilder.Entity("ITHelpdesk.Web.Models.Entities.Notification", b =>
+                {
+                    b.HasOne("ITHelpdesk.Web.Models.Entities.Ticket", "Ticket")
+                        .WithMany("Notifications")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ITHelpdesk.Web.Models.Entities.ApplicationUser", "User")
+                        .WithMany("Notifications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Ticket");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ITHelpdesk.Web.Models.Entities.Ticket", b =>
                 {
                     b.HasOne("ITHelpdesk.Web.Models.Entities.ApplicationUser", "AssignedToUser")
@@ -685,6 +751,8 @@ namespace ITHelpdesk.Web.Data.Migrations
 
                     b.Navigation("ITSupportCategories");
 
+                    b.Navigation("Notifications");
+
                     b.Navigation("StatusChanges");
 
                     b.Navigation("TicketComments");
@@ -693,6 +761,8 @@ namespace ITHelpdesk.Web.Data.Migrations
             modelBuilder.Entity("ITHelpdesk.Web.Models.Entities.Ticket", b =>
                 {
                     b.Navigation("Comments");
+
+                    b.Navigation("Notifications");
 
                     b.Navigation("StatusHistories");
                 });

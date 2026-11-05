@@ -1,0 +1,54 @@
+@model ITHelpdesk.Web.Models.ViewModels.NotificationBellViewModel
+
+<div class="dropdown">
+    <button class="btn btn-outline-secondary position-relative"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            aria-label="Notifications">
+        <span aria-hidden="true">&#128276;</span>
+        @if (Model.UnreadCount > 0)
+        {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                @(Model.UnreadCount > 99 ? "99+" : Model.UnreadCount)
+                <span class="visually-hidden">unread notifications</span>
+            </span>
+        }
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end p-2" style="min-width: 320px;">
+        @if (Model.RecentNotifications.Count == 0)
+        {
+            <li class="dropdown-item-text text-muted">Tidak ada notifikasi.</li>
+        }
+        else
+        {
+            @foreach (var notification in Model.RecentNotifications)
+            {
+                <li>
+                    <form asp-controller="Notifications"
+                          asp-action="Open"
+                          asp-antiforgery="false"
+                          method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@notification.Id" />
+                        <button type="submit"
+                                class="dropdown-item text-wrap @(notification.IsRead ? "" : "fw-bold")">
+                            <span>@notification.Title</span>
+                            <small class="d-block text-muted">@notification.Message</small>
+                            @if (!notification.IsRead)
+                            {
+                                <span class="badge bg-primary">Baru</span>
+                            }
+                        </button>
+                    </form>
+                </li>
+            }
+        }
+        <li><hr class="dropdown-divider" /></li>
+        <li>
+            <a class="dropdown-item text-primary"
+               asp-controller="Notifications"
+               asp-action="Index">Lihat semua notifikasi</a>
+        </li>
+    </ul>
+</div>

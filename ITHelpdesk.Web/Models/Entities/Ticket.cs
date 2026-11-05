@@ -43,4 +43,7 @@ public class Ticket
 
     public ICollection<TicketStatusHistory> StatusHistories { get; set; }
         = new List<TicketStatusHistory>();
+
+    public ICollection<Notification> Notifications { get; set; }
+        = new List<Notification>();
 }

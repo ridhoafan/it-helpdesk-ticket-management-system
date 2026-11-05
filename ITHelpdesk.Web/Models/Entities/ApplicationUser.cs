@@ -34,4 +34,6 @@ public class ApplicationUser : IdentityUser
     public ICollection<TicketStatusHistory> StatusChanges { get; set; } = new List<TicketStatusHistory>();
 
     public ICollection<ITSupportCategory> ITSupportCategories { get; set; } = new List<ITSupportCategory>();
+
+    public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 }

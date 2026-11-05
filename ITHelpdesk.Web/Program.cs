@@ -109,6 +109,7 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // Audit Log Service
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // ==========================================
 // MVC AND JSON CONFIGURATION

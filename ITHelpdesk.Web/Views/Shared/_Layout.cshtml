@@ -491,6 +491,11 @@
                         DEVELOPMENT
                     </span>
 
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        @await Component.InvokeAsync("NotificationBell")
+                    }
+
                     <div class="user-profile">
 
                         <div class="user-profile-info">
