@@ -1,0 +1,504 @@
+﻿
+@using ITHelpdesk.Web.Models.Enums
+@model ITHelpdesk.Web.DTOs.Dashboard.DashboardSummaryDto
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container-fluid py-4">
+
+    <!-- Dashboard Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Dashboard</h2>
+            <p class="text-muted mb-0">
+                Welcome to IT Helpdesk Management System.
+                Monitor your IT support activities here.
+            </p>
+        </div>
+
+        <div class="mt-3 mt-md-0">
+            <a asp-controller="Tickets"
+               asp-action="Create"
+               class="btn btn-primary">
+                + Create New Ticket
+            </a>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+        </div>
+    }
+
+    <!-- Ticket Overview -->
+    <h5 class="fw-bold mb-3">Ticket Overview</h5>
+
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-5 g-3 mb-4">
+
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Total Tickets</p>
+                    <h2 class="fw-bold mb-0">@Model.TotalTickets</h2>
+                    <small class="text-muted">Active tickets</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card border-0 shadow-sm border-start border-primary border-4 h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Open</p>
+                    <h2 class="fw-bold text-primary mb-0">@Model.OpenTickets</h2>
+                    <small class="text-muted">Waiting for support</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card border-0 shadow-sm border-start border-warning border-4 h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">In Progress</p>
+                    <h2 class="fw-bold text-warning mb-0">@Model.InProgressTickets</h2>
+                    <small class="text-muted">Currently being handled</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card border-0 shadow-sm border-start border-success border-4 h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Resolved</p>
+                    <h2 class="fw-bold text-success mb-0">@Model.ResolvedTickets</h2>
+                    <small class="text-muted">Issues resolved</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card border-0 shadow-sm border-start border-secondary border-4 h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Closed</p>
+                    <h2 class="fw-bold text-secondary mb-0">@Model.ClosedTickets</h2>
+                    <small class="text-muted">Completed tickets</small>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Priority Overview -->
+    <h5 class="fw-bold mb-3">Tickets by Priority</h5>
+
+    <div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
+
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <span class="badge bg-success mb-2">Low</span>
+                    <h3 class="fw-bold mb-0">@Model.LowPriorityTickets</h3>
+                    <small class="text-muted">Low priority</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <span class="badge bg-info text-dark mb-2">Medium</span>
+                    <h3 class="fw-bold mb-0">@Model.MediumPriorityTickets</h3>
+                    <small class="text-muted">Medium priority</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <span class="badge bg-warning text-dark mb-2">High</span>
+                    <h3 class="fw-bold mb-0">@Model.HighPriorityTickets</h3>
+                    <small class="text-muted">High priority</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <span class="badge bg-danger mb-2">Critical</span>
+                    <h3 class="fw-bold mb-0">@Model.CriticalPriorityTickets</h3>
+                    <small class="text-muted">Critical priority</small>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Analytics Charts -->
+    <h5 class="fw-bold mb-3">Ticket Analytics</h5>
+
+    <div class="row g-3 mb-4">
+
+        <!-- Status Doughnut Chart -->
+        <div class="col-lg-5">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-header bg-white py-3">
+                    <h6 class="fw-bold mb-1">
+                        Ticket Status Distribution
+                    </h6>
+
+                    <small class="text-muted">
+                        Distribution of tickets by status
+                    </small>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="chart-container">
+                        <canvas id="statusChart"
+                                data-values="@Model.OpenTickets,@Model.InProgressTickets,@Model.ResolvedTickets,@Model.ClosedTickets">
+                        </canvas>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Priority Bar Chart -->
+        <div class="col-lg-7">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-header bg-white py-3">
+                    <h6 class="fw-bold mb-1">
+                        Ticket Priority Distribution
+                    </h6>
+
+                    <small class="text-muted">
+                        Number of tickets by priority level
+                    </small>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="chart-container">
+                        <canvas id="priorityChart"
+                                data-values="@Model.LowPriorityTickets,@Model.MediumPriorityTickets,@Model.HighPriorityTickets,@Model.CriticalPriorityTickets">
+                        </canvas>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Recent Tickets -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+
+            <div>
+                <h5 class="fw-bold mb-0">Recent Tickets</h5>
+
+                <small class="text-muted">
+                    Latest five active tickets
+                </small>
+            </div>
+
+            <a asp-controller="Tickets"
+               asp-action="Index"
+               class="btn btn-sm btn-outline-primary">
+                View All
+            </a>
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>Ticket Number</th>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Created By</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @if (Model.RecentTickets.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <h6 class="text-muted">
+                                    No tickets available
+                                </h6>
+
+                                <p class="text-muted small mb-3">
+                                    Start by creating your first IT support ticket.
+                                </p>
+
+                                <a asp-controller="Tickets"
+                                   asp-action="Create"
+                                   class="btn btn-sm btn-primary">
+                                    Create Ticket
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var ticket in Model.RecentTickets)
+                        {
+                            var statusLabel = ticket.Status switch
+                            {
+                                TicketStatus.InProgress => "In Progress",
+                                _ => ticket.Status.ToString()
+                            };
+
+                            var statusClass = ticket.Status switch
+                            {
+                                TicketStatus.Open => "bg-primary",
+                                TicketStatus.InProgress => "bg-warning text-dark",
+                                TicketStatus.Resolved => "bg-success",
+                                TicketStatus.Closed => "bg-secondary",
+                                _ => "bg-secondary"
+                            };
+
+                            var priorityClass = ticket.Priority switch
+                            {
+                                TicketPriority.Low => "bg-success",
+                                TicketPriority.Medium => "bg-info text-dark",
+                                TicketPriority.High => "bg-warning text-dark",
+                                TicketPriority.Critical => "bg-danger",
+                                _ => "bg-secondary"
+                            };
+
+                            <tr>
+                                <td>
+                                    <strong>@ticket.TicketNumber</strong>
+                                </td>
+
+                                <td>@ticket.Title</td>
+
+                                <td>@ticket.CategoryName</td>
+
+                                <td>
+                                    <span class="badge @priorityClass">
+                                        @ticket.Priority
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="badge @statusClass">
+                                        @statusLabel
+                                    </span>
+                                </td>
+
+                                <td>@ticket.CreatedByName</td>
+
+                                <td>
+                                    <a asp-controller="Tickets"
+                                       asp-action="Details"
+                                       asp-route-id="@ticket.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Details
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Chart.js Scripts -->
+@section Scripts {
+
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js"></script>
+
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // ==================================
+            // STATUS DOUGHNUT CHART
+            // ==================================
+
+            const statusCanvas =
+                document.getElementById("statusChart");
+
+            if (statusCanvas && window.Chart) {
+
+                const statusValues =
+                    statusCanvas.dataset.values
+                        .split(",")
+                        .map(Number);
+
+                new Chart(statusCanvas, {
+
+                    type: "doughnut",
+
+                    data: {
+                        labels: [
+                            "Open",
+                            "In Progress",
+                            "Resolved",
+                            "Closed"
+                        ],
+
+                        datasets: [{
+                            label: "Tickets",
+
+                            data: statusValues,
+
+                            backgroundColor: [
+                                "#2563eb",
+                                "#f59e0b",
+                                "#16a34a",
+                                "#64748b"
+                            ],
+
+                            borderColor: "#ffffff",
+                            borderWidth: 3,
+                            hoverOffset: 8
+                        }]
+                    },
+
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+
+                        plugins: {
+                            legend: {
+                                position: "bottom"
+                            },
+
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+
+                });
+
+            }
+
+            // ==================================
+            // PRIORITY BAR CHART
+            // ==================================
+
+            const priorityCanvas =
+                document.getElementById("priorityChart");
+
+            if (priorityCanvas && window.Chart) {
+
+                const priorityValues =
+                    priorityCanvas.dataset.values
+                        .split(",")
+                        .map(Number);
+
+                new Chart(priorityCanvas, {
+
+                    type: "bar",
+
+                    data: {
+                        labels: [
+                            "Low",
+                            "Medium",
+                            "High",
+                            "Critical"
+                        ],
+
+                        datasets: [{
+
+                            label: "Number of Tickets",
+
+                            data: priorityValues,
+
+                            backgroundColor: [
+                                "#16a34a",
+                                "#0ea5e9",
+                                "#f59e0b",
+                                "#dc2626"
+                            ],
+
+                            borderRadius: 6,
+
+                            maxBarThickness: 65
+
+                        }]
+                    },
+
+                    options: {
+
+                        responsive: true,
+                        maintainAspectRatio: false,
+
+                        plugins: {
+
+                            legend: {
+                                display: false
+                            }
+
+                        },
+
+                        scales: {
+
+                            y: {
+                                beginAtZero: true,
+
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+
+                        }
+
+                    }
+
+                });
+
+            }
+
+        });
+
+    </script>
+}

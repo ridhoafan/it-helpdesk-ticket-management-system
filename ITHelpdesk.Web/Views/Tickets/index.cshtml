@@ -1,0 +1,377 @@
+
+@using ITHelpdesk.Web.DTOs.Tickets
+@using ITHelpdesk.Web.Models.Enums
+@model IReadOnlyList<TicketListItemDto>
+
+@{
+    ViewData["Title"] = "Ticket Management";
+}
+
+<div class="container-fluid py-4">
+
+    <!-- Page Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">Ticket Management</h2>
+
+            <p class="text-muted mb-0">
+                Manage, monitor, and track IT support requests.
+            </p>
+        </div>
+
+        <a asp-action="Create"
+           class="btn btn-primary mt-3 mt-md-0">
+            + Create New Ticket
+        </a>
+
+    </div>
+
+    <!-- Success Message -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+        </div>
+    }
+
+    <!-- Ticket Summary -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body d-flex justify-content-between align-items-center">
+
+                    <div>
+                        <small class="text-muted">
+                            Current Results
+                        </small>
+
+                        <h3 class="fw-bold mb-0">
+                            @Model.Count
+                        </h3>
+
+                        <small class="text-muted">
+                            Tickets matching your filters
+                        </small>
+                    </div>
+
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                        <span class="text-primary fs-4">▤</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body d-flex justify-content-between align-items-center">
+
+                    <div>
+                        <small class="text-muted">
+                            Available Actions
+                        </small>
+
+                        <h6 class="fw-bold mb-1">
+                            Manage IT Tickets
+                        </h6>
+
+                        <small class="text-muted">
+                            View, edit, and track reported issues.
+                        </small>
+                    </div>
+
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                        <span class="text-success fs-4">✓</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-white py-3">
+            <h6 class="fw-bold mb-0">
+                Search and Filter
+            </h6>
+        </div>
+
+        <div class="card-body">
+
+            <form method="get" asp-action="Index">
+
+                <div class="row g-3 align-items-end">
+
+                    <!-- Search -->
+                    <div class="col-lg-4">
+
+                        <label class="form-label fw-semibold">
+                            Search Ticket
+                        </label>
+
+                        <input type="text"
+                               name="search"
+                               value="@ViewBag.Search"
+                               class="form-control"
+                               placeholder="Ticket number or title..." />
+
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div class="col-lg-3">
+
+                        <label class="form-label fw-semibold">
+                            Status
+                        </label>
+
+                        <select name="status"
+                                class="form-select"
+                                asp-items="ViewBag.StatusOptions">
+
+                            <option value="">
+                                All Statuses
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- Priority Filter -->
+                    <div class="col-lg-3">
+
+                        <label class="form-label fw-semibold">
+                            Priority
+                        </label>
+
+                        <select name="priority"
+                                class="form-select"
+                                asp-items="ViewBag.PriorityOptions">
+
+                            <option value="">
+                                All Priorities
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="col-lg-2 d-flex gap-2">
+
+                        <button type="submit"
+                                class="btn btn-primary flex-grow-1">
+                            Filter
+                        </button>
+
+                        <a asp-action="Index"
+                           class="btn btn-outline-secondary">
+                            Reset
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- Ticket Table -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+
+            <div>
+                <h5 class="fw-bold mb-1">
+                    All Tickets
+                </h5>
+
+                <small class="text-muted">
+                    List of reported IT problems
+                </small>
+            </div>
+
+            <span class="badge bg-light text-dark border">
+                @Model.Count Results
+            </span>
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+
+                    <tr>
+                        <th class="ps-3">Ticket Number</th>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Created By</th>
+                        <th>Assigned To</th>
+                        <th>Action</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @if (Model.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="8"
+                                class="text-center py-5">
+
+                                <div class="mb-3 text-muted fs-1">
+                                    ▤
+                                </div>
+
+                                <h6 class="fw-bold">
+                                    No Tickets Found
+                                </h6>
+
+                                <p class="text-muted mb-3">
+                                    No tickets match your search or filter criteria.
+                                </p>
+
+                                <a asp-action="Index"
+                                   class="btn btn-outline-primary btn-sm">
+                                    Clear Filters
+                                </a>
+
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var ticket in Model)
+                        {
+                            var statusLabel = ticket.Status switch
+                            {
+                                TicketStatus.InProgress => "In Progress",
+                                _ => ticket.Status.ToString()
+                            };
+
+                            var statusClass = ticket.Status switch
+                            {
+                                TicketStatus.Open => "bg-primary",
+                                TicketStatus.InProgress => "bg-warning text-dark",
+                                TicketStatus.Resolved => "bg-success",
+                                TicketStatus.Closed => "bg-secondary",
+                                _ => "bg-secondary"
+                            };
+
+                            var priorityClass = ticket.Priority switch
+                            {
+                                TicketPriority.Low => "bg-success",
+                                TicketPriority.Medium => "bg-info text-dark",
+                                TicketPriority.High => "bg-warning text-dark",
+                                TicketPriority.Critical => "bg-danger",
+                                _ => "bg-secondary"
+                            };
+
+                            <tr>
+
+                                <td class="ps-3">
+                                    <span class="fw-semibold text-primary">
+                                        @ticket.TicketNumber
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="fw-semibold">
+                                        @ticket.Title
+                                    </span>
+                                </td>
+
+                                <td>
+                                    @ticket.CategoryName
+                                </td>
+
+                                <td>
+                                    <span class="badge @priorityClass">
+                                        @ticket.Priority
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="badge @statusClass">
+                                        @statusLabel
+                                    </span>
+                                </td>
+
+                                <td>
+                                    @ticket.CreatedByName
+                                </td>
+
+                                <td>
+                                    @(ticket.AssignedToName ?? "Unassigned")
+                                </td>
+
+                                <td>
+
+                                    <div class="d-flex gap-1">
+
+                                        <a asp-action="Details"
+                                           asp-route-id="@ticket.Id"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Details
+                                        </a>
+
+                                        <a asp-action="Edit"
+                                           asp-route-id="@ticket.Id"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            Edit
+                                        </a>
+
+                                        <form asp-action="Delete"
+                                              asp-route-id="@ticket.Id"
+                                              method="post"
+                                              onsubmit="return confirm('Are you sure you want to delete this ticket?');">
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger">
+                                                Delete
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <div class="card-footer bg-white py-3">
+
+            <small class="text-muted">
+                Showing @Model.Count ticket(s).
+            </small>
+
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,571 @@
+﻿
+@{
+    var currentController =
+        ViewContext.RouteData.Values["controller"]?.ToString();
+
+    var currentAction =
+        ViewContext.RouteData.Values["action"]?.ToString();
+
+    var isAdmin = User.IsInRole("Admin");
+    var isSupport = User.IsInRole("IT Support");
+    var isEmployee = User.IsInRole("Employee");
+
+    var currentUserName = User.Identity?.Name ?? "User";
+
+    var currentRole = isAdmin
+        ? "Administrator"
+        : isSupport
+            ? "IT Support"
+            : isEmployee
+                ? "Employee"
+                : "User";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - IT Helpdesk</title>
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/ITHelpdesk.Web.styles.css"
+          asp-append-version="true" />
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background-color: #f4f6fa;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .app-shell {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+
+        .app-sidebar {
+            width: 250px;
+            min-width: 250px;
+            min-height: 100vh;
+            background-color: #172235;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-brand {
+            padding: 25px 22px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 9px;
+            background-color: #3b82f6;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 17px;
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+        }
+
+        .brand-description {
+            color: #94a3b8;
+            font-size: 11px;
+            margin-top: 3px;
+        }
+
+        .sidebar-content {
+            padding: 25px 13px;
+            flex: 1;
+        }
+
+        .sidebar-label {
+            padding: 0 12px;
+            margin-bottom: 12px;
+            color: #8190a8;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            margin-bottom: 5px;
+            border-radius: 7px;
+            color: #b9c4d5;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-link:hover {
+            background-color: rgba(255,255,255,0.07);
+            color: #ffffff;
+        }
+
+        .sidebar-link.active {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .sidebar-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 17px;
+        }
+
+        .sidebar-info {
+            padding: 12px;
+            margin: 10px 5px;
+            background-color: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            color: #94a3b8;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .sidebar-footer {
+            padding: 18px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .sidebar-footer-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .sidebar-footer-description {
+            font-size: 11px;
+            color: #8190a8;
+            margin-top: 4px;
+        }
+
+        /* MAIN PANEL */
+
+        .main-panel {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* TOPBAR */
+
+        .topbar {
+            min-height: 65px;
+            padding: 10px 28px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .topbar-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .environment-badge {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-profile-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .user-profile-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .user-profile-role {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .logout-button {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            border-radius: 7px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .logout-button:hover {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+        }
+
+        /* MAIN CONTENT */
+
+        .main-content {
+            flex: 1;
+            padding: 10px;
+        }
+
+        /* FOOTER */
+
+        .app-footer {
+            padding: 18px 28px;
+            background-color: #ffffff;
+            border-top: 1px solid #e5e7eb;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        /* SIDEBAR MOBILE */
+
+        @@media (min-width: 992px) {
+            .app-sidebar.collapse {
+                display: flex !important;
+            }
+        }
+
+        @@media (max-width: 991.98px) {
+            .app-shell {
+                display: block;
+            }
+
+            .app-sidebar {
+                width: 100%;
+                min-width: 100%;
+                min-height: auto;
+            }
+
+            .sidebar-content {
+                padding: 15px 13px;
+            }
+
+            .sidebar-footer {
+                display: none;
+            }
+
+            .topbar {
+                padding: 10px 15px;
+                min-height: 60px;
+            }
+
+            .main-content {
+                padding: 10px;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .user-profile-info {
+                display: none;
+            }
+
+            .environment-badge {
+                display: none;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="app-shell">
+
+        <!-- SIDEBAR -->
+
+        <aside class="app-sidebar collapse d-lg-flex"
+               id="appSidebar">
+
+            <div class="sidebar-brand">
+
+                <div class="brand-logo">
+
+                    <div class="brand-icon">
+                        IT
+                    </div>
+
+                    <div>
+                        <h5 class="brand-name">
+                            Helpdesk
+                        </h5>
+
+                        <div class="brand-description">
+                            IT Support Management
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- NAVIGATION -->
+
+            <div class="sidebar-content">
+
+                @if (isAdmin || isSupport)
+                {
+                    <div class="sidebar-label">
+                        WORKSPACE
+                    </div>
+
+                    <nav class="nav flex-column">
+
+                        <a asp-controller="Home"
+                           asp-action="Index"
+                           class="sidebar-link @(currentController == "Home" ? "active" : "")">
+
+                            <span class="sidebar-icon">▦</span>
+                            Dashboard
+
+                        </a>
+
+                        <a asp-controller="Tickets"
+                           asp-action="Index"
+                           class="sidebar-link @(currentController == "Tickets" ? "active" : "")">
+
+                            <span class="sidebar-icon">▤</span>
+                            Ticket Management
+
+                        </a>
+
+                    </nav>
+                }
+
+                @if (isAdmin)
+                {
+                    <div class="sidebar-label mt-4">
+                        ADMINISTRATION
+                    </div>
+
+                    <nav class="nav flex-column">
+
+                        <!-- USER APPROVAL -->
+
+                        <a asp-controller="UserApprovals"
+                           asp-action="Index"
+                           class="sidebar-link @(currentController == "UserApprovals" ? "active" : "")">
+
+                            <span class="sidebar-icon">♙</span>
+                            User Approval
+
+                        </a>
+
+                        <!-- AUDIT LOGS -->
+
+                        <a asp-controller="AuditLogs"
+                           asp-action="Index"
+                           class="sidebar-link @(currentController == "AuditLogs" ? "active" : "")">
+
+                            <span class="sidebar-icon">◷</span>
+                            Audit Logs
+
+                        </a>
+
+                    </nav>
+                }
+
+                @if (isEmployee)
+                {
+                    <div class="sidebar-label">
+                        MY WORKSPACE
+                    </div>
+
+                    <div class="sidebar-info">
+                        Employee Portal sedang dalam tahap pengembangan.
+                        Fitur pengelolaan tiket pribadi akan segera tersedia.
+                    </div>
+                }
+
+                @if (!isAdmin && !isSupport && !isEmployee)
+                {
+                    <div class="sidebar-info">
+                        Tidak ada role pengguna yang teridentifikasi.
+                        Silakan hubungi Administrator.
+                    </div>
+                }
+
+            </div>
+
+            <!-- SIDEBAR FOOTER -->
+
+            <div class="sidebar-footer">
+
+                <div class="sidebar-footer-title">
+                    IT Helpdesk System
+                </div>
+
+                <div class="sidebar-footer-description">
+                    Internal Management Portal
+                </div>
+
+            </div>
+
+        </aside>
+
+        <!-- MAIN PANEL -->
+
+        <div class="main-panel">
+
+            <!-- TOPBAR -->
+
+            <header class="topbar">
+
+                <div class="d-flex align-items-center gap-3">
+
+                    <button class="btn btn-outline-secondary btn-sm d-lg-none"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#appSidebar"
+                            aria-controls="appSidebar"
+                            aria-expanded="false"
+                            aria-label="Toggle navigation">
+
+                        ☰
+
+                    </button>
+
+                    <span class="topbar-title">
+                        @ViewData["Title"]
+                    </span>
+
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+
+                    <span class="environment-badge">
+                        DEVELOPMENT
+                    </span>
+
+                    <div class="user-profile">
+
+                        <div class="user-profile-info">
+
+                            <span class="user-profile-name">
+                                @currentUserName
+                            </span>
+
+                            <span class="user-profile-role">
+                                @currentRole
+                            </span>
+
+                        </div>
+
+                        <!-- LOGOUT -->
+
+                        <form asp-controller="Account"
+                              asp-action="Logout"
+                              method="post"
+                              class="m-0">
+
+                            <button type="submit"
+                                    class="logout-button">
+                                Logout
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+            <!-- PAGE CONTENT -->
+
+            <main class="main-content" role="main">
+
+                @RenderBody()
+
+            </main>
+
+            <!-- FOOTER -->
+
+            <footer class="app-footer">
+
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+
+                    <span>
+                        &copy; @DateTime.Now.Year IT Helpdesk
+                    </span>
+
+                    <span class="mt-2 mt-md-0">
+                        IT Helpdesk & Ticket Management System
+                    </span>
+
+                </div>
+
+            </footer>
+
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT -->
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/js/site.js"
+            asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+
+</html>

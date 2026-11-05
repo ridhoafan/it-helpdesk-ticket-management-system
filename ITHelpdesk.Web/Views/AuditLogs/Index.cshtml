@@ -1,0 +1,554 @@
+
+@model ITHelpdesk.Web.Models.ViewModels.AuditLogIndexViewModel
+
+@{
+    ViewData["Title"] = "Audit Logs";
+}
+
+<style>
+    .audit-page {
+        color: #1e293b;
+    }
+
+    .audit-header {
+        margin-bottom: 25px;
+    }
+
+    .audit-header h2 {
+        font-size: 25px;
+        font-weight: 700;
+        margin-bottom: 7px;
+    }
+
+    .audit-header p {
+        color: #64748b;
+        font-size: 14px;
+        margin-bottom: 0;
+    }
+
+    .audit-summary {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 22px;
+        margin-bottom: 22px;
+    }
+
+    .audit-summary-label {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 8px;
+    }
+
+    .audit-summary-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .audit-filter-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .audit-table-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .audit-table-header {
+        padding: 20px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .audit-table-header h5 {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .audit-table {
+        margin-bottom: 0;
+        min-width: 950px;
+    }
+
+    .audit-table thead th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 14px 16px;
+        white-space: nowrap;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .audit-table tbody td {
+        padding: 15px 16px;
+        font-size: 12px;
+        vertical-align: middle;
+        color: #475569;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .audit-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .audit-user-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 3px;
+    }
+
+    .audit-user-email {
+        font-size: 11px;
+        color: #94a3b8;
+        overflow-wrap: anywhere;
+    }
+
+    .audit-action {
+        display: inline-block;
+        padding: 5px 9px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .action-created {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .action-updated {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .action-deleted {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .action-status {
+        background: #f3e8ff;
+        color: #6b21a8;
+    }
+
+    .action-approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .action-rejected {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .action-default {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .audit-entity {
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .audit-description {
+        max-width: 280px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    .audit-ip {
+        font-family: Consolas, monospace;
+        font-size: 11px;
+        color: #64748b;
+    }
+
+    .audit-date {
+        white-space: nowrap;
+        font-size: 11px;
+        color: #64748b;
+    }
+
+    .audit-pagination {
+        padding: 18px 20px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .audit-pagination-info {
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .audit-pagination .page-link {
+        font-size: 12px;
+        color: #334155;
+    }
+
+    .audit-pagination .active .page-link {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #ffffff;
+    }
+
+    .audit-empty {
+        padding: 60px 20px;
+        text-align: center;
+    }
+
+    .audit-empty-icon {
+        font-size: 38px;
+        margin-bottom: 15px;
+        color: #94a3b8;
+    }
+
+    .audit-empty h5 {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 7px;
+    }
+
+    .audit-empty p {
+        font-size: 13px;
+        color: #64748b;
+        margin: 0;
+    }
+
+    @@media (max-width: 576px) {
+        .audit-summary {
+            padding: 18px;
+        }
+
+        .audit-filter-card {
+            padding: 16px;
+        }
+
+        .audit-table-header {
+            padding: 16px;
+        }
+    }
+</style>
+
+<div class="audit-page">
+
+    <div class="audit-header">
+        <h2>Audit Logs</h2>
+
+        <p>
+            Monitor and review activities performed by users
+            across the IT Helpdesk system.
+        </p>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="audit-summary">
+
+        <div class="audit-summary-label">
+            Total Recorded Activities
+        </div>
+
+        <div class="audit-summary-value">
+            @Model.TotalCount.ToString("N0")
+        </div>
+
+    </div>
+
+    <!-- FILTER -->
+    <div class="audit-filter-card">
+
+        <form asp-controller="AuditLogs"
+              asp-action="Index"
+              method="get">
+
+            <div class="row g-3 align-items-end">
+
+                <div class="col-lg-5 col-md-5">
+
+                    <label class="form-label small fw-semibold">
+                        Search Activities
+                    </label>
+
+                    <input type="text"
+                           name="search"
+                           value="@Model.Search"
+                           class="form-control form-control-sm"
+                           placeholder="Search user, activity, description..." />
+
+                </div>
+
+                <div class="col-lg-4 col-md-4">
+
+                    <label class="form-label small fw-semibold">
+                        Activity Type
+                    </label>
+
+                    <select name="actionFilter"
+                            asp-items="ViewBag.ActionOptions"
+                            class="form-select form-select-sm">
+
+                        <option value="">All Activities</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-lg-3 col-md-3">
+
+                    <div class="d-flex gap-2">
+
+                        <button type="submit"
+                                class="btn btn-primary btn-sm flex-grow-1">
+                            Search
+                        </button>
+
+                        <a asp-controller="AuditLogs"
+                           asp-action="Index"
+                           class="btn btn-outline-secondary btn-sm">
+                            Reset
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <!-- AUDIT LOG TABLE -->
+    <div class="audit-table-card">
+
+        <div class="audit-table-header">
+
+            <div>
+                <h5>Activity History</h5>
+
+                <span class="text-muted small">
+                    System activity records
+                </span>
+            </div>
+
+            <span class="badge bg-light text-dark border">
+                @Model.Logs.Count
+                @(Model.Logs.Count == 1 ? "record" : "records")
+            </span>
+
+        </div>
+
+        @if (Model.Logs.Any())
+        {
+            <div class="table-responsive">
+
+                <table class="table audit-table">
+
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Activity</th>
+                            <th>Entity</th>
+                            <th>Description</th>
+                            <th>IP Address</th>
+                            <th>Date & Time</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var log in Model.Logs)
+                        {
+                            var actionClass = log.Action switch
+                            {
+                                "TicketCreated" => "action-created",
+                                "TicketUpdated" => "action-updated",
+                                "TicketDeleted" => "action-deleted",
+                                "TicketStatusChanged" => "action-status",
+                                "UserApproved" => "action-approved",
+                                "UserRejected" => "action-rejected",
+                                _ => "action-default"
+                            };
+
+                            var entityDescription =
+                                $"{log.EntityType} #{log.EntityId ?? "-"}";
+
+                            <tr>
+
+                                <!-- USER -->
+                                <td>
+
+                                    <div class="audit-user-name">
+                                        @(log.UserName ?? "Unknown User")
+                                    </div>
+
+                                    <div class="audit-user-email">
+                                        @(log.UserEmail ?? "No email available")
+                                    </div>
+
+                                </td>
+
+                                <!-- ACTIVITY -->
+                                <td>
+
+                                    <span class="audit-action @actionClass">
+                                        @log.Action
+                                    </span>
+
+                                </td>
+
+                                <!-- ENTITY -->
+                                <td>
+                                    <span class="audit-entity">
+                                        @entityDescription
+                                    </span>
+                                </td>
+
+                                <!-- DESCRIPTION -->
+                                <td>
+                                    <div class="audit-description">
+                                        @log.Description
+                                    </div>
+                                </td>
+
+                                <!-- IP ADDRESS -->
+                                <td>
+                                    <span class="audit-ip">
+                                        @(log.IpAddress ?? "-")
+                                    </span>
+                                </td>
+
+                                <!-- DATE AND TIME -->
+                                <td>
+
+                                    <div class="audit-date">
+                                        @(log.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy"))
+                                    </div>
+
+                                    <div class="audit-date">
+                                        @(log.CreatedAtUtc.ToLocalTime().ToString("HH:mm:ss"))
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- PAGINATION -->
+            <div class="audit-pagination">
+
+                <div class="audit-pagination-info">
+
+                    Showing
+
+                    <strong>
+                        @(((Model.CurrentPage - 1) * Model.PageSize) + 1)
+                    </strong>
+
+                    to
+
+                    <strong>
+                        @Math.Min(
+                            Model.CurrentPage * Model.PageSize,
+                            Model.TotalCount
+                        )
+                    </strong>
+
+                    of
+
+                    <strong>@Model.TotalCount</strong>
+
+                    activities
+
+                </div>
+
+                @if (Model.TotalPages > 1)
+                {
+                    <nav aria-label="Audit log pagination">
+
+                        <ul class="pagination pagination-sm mb-0">
+
+                            <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-search="@Model.Search"
+                                   asp-route-actionFilter="@Model.ActionFilter"
+                                   asp-route-page="@(Model.CurrentPage - 1)">
+                                    Previous
+                                </a>
+
+                            </li>
+
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    @Model.CurrentPage / @Model.TotalPages
+                                </span>
+                            </li>
+
+                            <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-search="@Model.Search"
+                                   asp-route-actionFilter="@Model.ActionFilter"
+                                   asp-route-page="@(Model.CurrentPage + 1)">
+                                    Next
+                                </a>
+
+                            </li>
+
+                        </ul>
+
+                    </nav>
+                }
+
+            </div>
+        }
+        else
+        {
+            <div class="audit-empty">
+
+                <div class="audit-empty-icon">
+                    &#128269;
+                </div>
+
+                <h5>No Activity Found</h5>
+
+                <p>
+                    Belum ada aktivitas yang tercatat
+                    atau tidak ada hasil yang sesuai dengan pencarian.
+                </p>
+
+            </div>
+        }
+
+    </div>
+
+</div>

@@ -1,0 +1,361 @@
+
+@using ITHelpdesk.Web.DTOs.Tickets
+@using ITHelpdesk.Web.Models.Enums
+@model CreateTicketDto
+
+@{
+    ViewData["Title"] = "Create Ticket";
+}
+
+<style>
+    .ticket-form-card {
+        border: none;
+        border-radius: 12px;
+    }
+
+    .form-section-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #263449;
+    }
+
+    .form-label {
+        font-weight: 600;
+        font-size: 13px;
+        color: #475569;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 7px;
+        padding: 10px 12px;
+        border-color: #dce2ea;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.12);
+    }
+
+    .form-hint {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 5px;
+    }
+
+    .information-card {
+        background-color: #eff6ff;
+        border: 1px solid #dbeafe;
+        border-radius: 10px;
+        padding: 20px;
+    }
+
+    .information-item {
+        font-size: 13px;
+        color: #475569;
+        margin-bottom: 12px;
+    }
+
+    .required-mark {
+        color: #dc3545;
+    }
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- Page Header -->
+    <div class="mb-4">
+
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <a asp-action="Index"
+               class="text-decoration-none text-muted small">
+                Tickets
+            </a>
+
+            <span class="text-muted small">/</span>
+
+            <span class="small fw-semibold">
+                Create Ticket
+            </span>
+        </div>
+
+        <h2 class="fw-bold mb-1">
+            Create New Ticket
+        </h2>
+
+        <p class="text-muted mb-0">
+            Submit a new IT support request and describe the issue you are experiencing.
+        </p>
+
+    </div>
+
+    <div class="row g-4">
+
+        <!-- Main Form -->
+        <div class="col-lg-8">
+
+            <div class="card ticket-form-card shadow-sm">
+
+                <div class="card-header bg-white border-bottom py-3 px-4">
+
+                    <h5 class="fw-bold mb-1">
+                        Ticket Information
+                    </h5>
+
+                    <small class="text-muted">
+                        Fields marked with * are required.
+                    </small>
+
+                </div>
+
+                <div class="card-body p-4">
+
+                    <form asp-action="Create" method="post">
+
+                        <!-- Validation Summary -->
+                        <div asp-validation-summary="ModelOnly"
+                             class="alert alert-danger"
+                             role="alert">
+                        </div>
+
+                        <!-- Title -->
+                        <div class="mb-4">
+
+                            <label asp-for="Title" class="form-label">
+                                Problem Title
+                                <span class="required-mark">*</span>
+                            </label>
+
+                            <input asp-for="Title"
+                                   class="form-control"
+                                   placeholder="Example: Computer cannot start"
+                                   maxlength="150" />
+
+                            <div class="form-hint">
+                                Provide a short and clear title describing the problem.
+                            </div>
+
+                            <span asp-validation-for="Title"
+                                  class="text-danger small">
+                            </span>
+
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+
+                            <label asp-for="Description"
+                                   class="form-label">
+                                Problem Description
+                                <span class="required-mark">*</span>
+                            </label>
+
+                            <textarea asp-for="Description"
+                                      class="form-control"
+                                      rows="5"
+                                      maxlength="4000"
+                                      placeholder="Describe the problem, when it started, and any error messages you encountered..."></textarea>
+
+                            <div class="form-hint">
+                                Explain the issue in detail to help the IT team investigate it.
+                            </div>
+
+                            <span asp-validation-for="Description"
+                                  class="text-danger small">
+                            </span>
+
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <div class="form-section-title mb-3">
+                            Classification
+                        </div>
+
+                        <div class="row g-3">
+
+                            <!-- Category -->
+                            <div class="col-md-6">
+
+                                <label asp-for="CategoryId"
+                                       class="form-label">
+                                    Issue Category
+                                    <span class="required-mark">*</span>
+                                </label>
+
+                                <select asp-for="CategoryId"
+                                        asp-items="ViewBag.CategoryOptions"
+                                        class="form-select">
+
+                                    <option value="">
+                                        Select Category
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="CategoryId"
+                                      class="text-danger small">
+                                </span>
+
+                            </div>
+
+                            <!-- Priority -->
+                            <div class="col-md-6">
+
+                                <label asp-for="Priority"
+                                       class="form-label">
+                                    Priority Level
+                                    <span class="required-mark">*</span>
+                                </label>
+
+                                <select asp-for="Priority"
+                                        asp-items="Html.GetEnumSelectList<TicketPriority>()"
+                                        class="form-select">
+                                </select>
+
+                                <span asp-validation-for="Priority"
+                                      class="text-danger small">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Form Actions -->
+                        <div class="d-flex flex-column flex-sm-row justify-content-end gap-2">
+
+                            <a asp-action="Index"
+                               class="btn btn-light border px-4">
+                                Cancel
+                            </a>
+
+                            <button type="submit"
+                                    class="btn btn-primary px-4">
+                                Submit Ticket
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Information Panel -->
+        <div class="col-lg-4">
+
+            <div class="information-card mb-3">
+
+                <h6 class="fw-bold mb-3">
+                    <span class="text-primary">ℹ</span>
+                    Before Submitting
+                </h6>
+
+                <div class="information-item">
+                    <strong>1. Provide a clear title</strong>
+                    <div>
+                        Use a short description of the IT issue.
+                    </div>
+                </div>
+
+                <div class="information-item">
+                    <strong>2. Explain the problem</strong>
+                    <div>
+                        Include relevant details and error messages.
+                    </div>
+                </div>
+
+                <div class="information-item">
+                    <strong>3. Select the right category</strong>
+                    <div>
+                        Choose the category that best represents your issue.
+                    </div>
+                </div>
+
+                <div class="information-item mb-0">
+                    <strong>4. Set the priority</strong>
+                    <div>
+                        Select the urgency level based on the impact of the problem.
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Priority Guide -->
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <h6 class="fw-bold mb-3">
+                        Priority Guide
+                    </h6>
+
+                    <div class="mb-3">
+
+                        <span class="badge bg-success">
+                            Low
+                        </span>
+
+                        <div class="small text-muted mt-1">
+                            Minor issue with little impact on daily operations.
+                        </div>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <span class="badge bg-info text-dark">
+                            Medium
+                        </span>
+
+                        <div class="small text-muted mt-1">
+                            Normal issue that requires attention but does not severely disrupt work.
+                        </div>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <span class="badge bg-warning text-dark">
+                            High
+                        </span>
+
+                        <div class="small text-muted mt-1">
+                            Significant issue affecting important work activities.
+                        </div>
+
+                    </div>
+
+                    <div>
+
+                        <span class="badge bg-danger">
+                            Critical
+                        </span>
+
+                        <div class="small text-muted mt-1">
+                            Severe issue causing major disruption to business operations.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

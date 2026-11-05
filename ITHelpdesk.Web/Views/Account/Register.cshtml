@@ -1,0 +1,309 @@
+
+@model ITHelpdesk.Web.Models.ViewModels.RegisterViewModel
+
+@{
+    Layout = null;
+    ViewData["Title"] = "Daftar Akun";
+}
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - IT Helpdesk</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            color: #1e293b;
+        }
+
+        .register-container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .register-card {
+            background: #ffffff;
+            padding: 38px;
+            border-radius: 16px;
+            box-shadow: 0 15px 45px rgba(15, 23, 42, 0.08);
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .brand-icon {
+            width: 56px;
+            height: 56px;
+            background: #1e293b;
+            color: #ffffff;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .brand p {
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 7px;
+            color: #334155;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .validation-error {
+            display: block;
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .validation-summary {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .validation-summary:empty {
+            display: none;
+        }
+
+        .validation-summary ul {
+            margin-left: 18px;
+        }
+
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 9px;
+            padding: 13px 14px;
+            margin-bottom: 22px;
+            color: #1e40af;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
+        .register-button {
+            width: 100%;
+            padding: 13px;
+            background: #1e293b;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .register-button:hover {
+            background: #334155;
+        }
+
+        .login-link {
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 22px;
+        }
+
+        .login-link a {
+            color: #2563eb;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .register-footer {
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 25px;
+        }
+
+        @@media (max-width: 480px) {
+            .register-card {
+                padding: 28px 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="register-container">
+        <section class="register-card">
+
+            <div class="brand">
+                <div class="brand-icon">IT</div>
+                <h1>Create Account</h1>
+                <p>
+                    Daftarkan akun untuk menggunakan layanan
+                    IT Helpdesk perusahaan.
+                </p>
+            </div>
+
+            <div class="info-box">
+                <strong>Informasi Persetujuan Akun</strong>
+                Setelah mendaftar, akun akan diperiksa oleh Admin.
+                Kamu dapat login setelah pendaftaran disetujui.
+            </div>
+
+            <form asp-controller="Account"
+                  asp-action="Register"
+                  method="post">
+
+                <div asp-validation-summary="ModelOnly"
+                     class="validation-summary">
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="FullName"></label>
+
+                    <input asp-for="FullName"
+                           class="form-control"
+                           placeholder="Contoh: Budi Santoso"
+                           autocomplete="name" />
+
+                    <span asp-validation-for="FullName"
+                          class="validation-error">
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="UserName"></label>
+
+                    <input asp-for="UserName"
+                           class="form-control"
+                           placeholder="Contoh: budisantoso"
+                           autocomplete="username" />
+
+                    <span asp-validation-for="UserName"
+                          class="validation-error">
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Email"></label>
+
+                    <input asp-for="Email"
+                           class="form-control"
+                           placeholder="nama@perusahaan.com"
+                           autocomplete="email" />
+
+                    <span asp-validation-for="Email"
+                          class="validation-error">
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Password"></label>
+
+                    <input asp-for="Password"
+                           class="form-control"
+                           placeholder="Minimal 8 karakter"
+                           autocomplete="new-password" />
+
+                    <span asp-validation-for="Password"
+                          class="validation-error">
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="ConfirmPassword"></label>
+
+                    <input asp-for="ConfirmPassword"
+                           class="form-control"
+                           placeholder="Masukkan ulang password"
+                           autocomplete="new-password" />
+
+                    <span asp-validation-for="ConfirmPassword"
+                          class="validation-error">
+                    </span>
+                </div>
+
+                <button type="submit" class="register-button">
+                    Daftar Akun
+                </button>
+
+            </form>
+
+            <div class="login-link">
+                Sudah memiliki akun?
+                <a asp-controller="Account" asp-action="Login">
+                    Login di sini
+                </a>
+            </div>
+
+            <div class="register-footer">
+                IT Helpdesk & Ticket Management System
+            </div>
+
+        </section>
+    </main>
+</body>
+</html>

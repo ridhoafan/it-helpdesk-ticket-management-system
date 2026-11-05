@@ -1,0 +1,943 @@
+
+@using ITHelpdesk.Web.DTOs.Tickets
+@using ITHelpdesk.Web.Models.Enums
+@model TicketDetailDto
+
+@{
+    ViewData["Title"] = "Ticket Details";
+
+    var isEmployee = ViewBag.IsEmployee is bool employee && employee;
+    var canManageTickets = ViewBag.CanManageAllTickets is bool canManage && canManage;
+    var canEditTicket = !isEmployee || Model.Status == TicketStatus.Open;
+
+    var statusLabel = Model.Status switch
+    {
+        TicketStatus.Open => "Open",
+        TicketStatus.InProgress => "In Progress",
+        TicketStatus.Resolved => "Resolved",
+        TicketStatus.Closed => "Closed",
+        _ => Model.Status.ToString()
+    };
+
+    var statusClass = Model.Status switch
+    {
+        TicketStatus.Open => "bg-primary",
+        TicketStatus.InProgress => "bg-warning text-dark",
+        TicketStatus.Resolved => "bg-success",
+        TicketStatus.Closed => "bg-secondary",
+        _ => "bg-secondary"
+    };
+
+    var priorityClass = Model.Priority switch
+    {
+        TicketPriority.Low => "bg-success",
+        TicketPriority.Medium => "bg-info text-dark",
+        TicketPriority.High => "bg-warning text-dark",
+        TicketPriority.Critical => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    var currentStep = Model.Status switch
+    {
+        TicketStatus.Open => 1,
+        TicketStatus.InProgress => 2,
+        TicketStatus.Resolved => 3,
+        TicketStatus.Closed => 4,
+        _ => 1
+    };
+
+    var progressSteps = new[]
+    {
+        new { Label = "Open", Description = "Ticket dibuat" },
+        new { Label = "In Progress", Description = "Sedang ditangani" },
+        new { Label = "Resolved", Description = "Masalah diselesaikan" },
+        new { Label = "Closed", Description = "Ticket ditutup" }
+    };
+}
+
+<style>
+    .detail-page {
+        color: #1e293b;
+    }
+
+    .detail-card {
+        border: none;
+        border-radius: 12px;
+    }
+
+    .detail-label {
+        color: #94a3b8;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .detail-value {
+        color: #334155;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+
+    .section-heading {
+        font-size: 15px;
+        font-weight: 700;
+        color: #263449;
+    }
+
+    .description-box {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 18px;
+        color: #475569;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .technician-card {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 10px;
+        padding: 18px;
+    }
+
+    .technician-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: #dbeafe;
+        color: #1d4ed8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 19px;
+        flex-shrink: 0;
+    }
+
+    .unassigned-card {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: 10px;
+        padding: 16px;
+    }
+
+    .progress-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 5px;
+        margin-top: 25px;
+    }
+
+    .progress-step {
+        flex: 1;
+        text-align: center;
+        position: relative;
+    }
+
+    .progress-step::after {
+        content: "";
+        position: absolute;
+        top: 15px;
+        left: calc(50% + 19px);
+        width: calc(100% - 38px);
+        height: 3px;
+        background: #e2e8f0;
+    }
+
+    .progress-step:last-child::after {
+        display: none;
+    }
+
+    .progress-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 9px;
+        font-size: 12px;
+        font-weight: 700;
+        position: relative;
+        z-index: 1;
+    }
+
+    .progress-step.completed .progress-circle,
+    .progress-step.current .progress-circle {
+        background: #2563eb;
+        color: white;
+    }
+
+    .progress-step.completed::after {
+        background: #2563eb;
+    }
+
+    .progress-step.current .progress-circle {
+        box-shadow: 0 0 0 4px #dbeafe;
+    }
+
+    .progress-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748b;
+    }
+
+    .progress-step.completed .progress-label,
+    .progress-step.current .progress-label {
+        color: #1e40af;
+    }
+
+    .progress-description {
+        font-size: 10px;
+        color: #94a3b8;
+        margin-top: 3px;
+    }
+
+    .history-item {
+        position: relative;
+        padding-left: 25px;
+        padding-bottom: 25px;
+        border-left: 2px solid #e2e8f0;
+        margin-left: 7px;
+    }
+
+    .history-item:last-child {
+        border-left-color: transparent;
+        padding-bottom: 0;
+    }
+
+    .history-dot {
+        position: absolute;
+        left: -7px;
+        top: 2px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #2563eb;
+        border: 2px solid white;
+        box-shadow: 0 0 0 1px #2563eb;
+    }
+
+    .comment-item {
+        padding: 15px;
+        border: 1px solid #e2e8f0;
+        border-radius: 9px;
+        margin-bottom: 12px;
+        background-color: white;
+    }
+
+    .comment-content {
+        color: #475569;
+        font-size: 14px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .comment-form {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 18px;
+    }
+
+    .comment-form textarea {
+        resize: vertical;
+        min-height: 100px;
+        font-size: 13px;
+    }
+
+    @@media (max-width: 576px) {
+        .progress-description {
+            display: none;
+        }
+
+        .progress-label {
+            font-size: 9px;
+        }
+
+        .progress-step::after {
+            left: calc(50% + 17px);
+            width: calc(100% - 34px);
+        }
+    }
+</style>
+
+<div class="detail-page container-fluid py-4">
+
+    <!-- PAGE HEADER -->
+    <div class="d-flex flex-column flex-md-row
+                justify-content-between align-items-md-center mb-4">
+
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+
+                <a asp-action="Index"
+                   class="text-decoration-none text-muted small">
+                    Tickets
+                </a>
+
+                <span class="text-muted small">/</span>
+
+                <span class="small fw-semibold">
+                    Ticket Details
+                </span>
+
+            </div>
+
+            <h2 class="fw-bold mb-1">Ticket Details</h2>
+
+            <p class="text-muted mb-0">
+                View ticket information and track its progress.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2 mt-3 mt-md-0">
+
+            @if (canEditTicket)
+            {
+                <a asp-action="Edit"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-primary">
+                    Edit Ticket
+                </a>
+            }
+
+            <a asp-action="Index"
+               class="btn btn-outline-secondary">
+                Back
+            </a>
+
+        </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show"
+             role="alert">
+
+            @TempData["Success"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show"
+             role="alert">
+
+            @TempData["Error"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+        </div>
+    }
+
+    <div class="row g-4">
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-8">
+
+            <!-- TICKET INFORMATION -->
+            <div class="card detail-card shadow-sm mb-4">
+
+                <div class="card-header bg-white border-bottom p-4">
+
+                    <div class="d-flex flex-column flex-md-row
+                                justify-content-between align-items-md-center gap-3">
+
+                        <div>
+                            <small class="text-muted">
+                                Ticket Number
+                            </small>
+
+                            <h5 class="fw-bold text-primary mb-1">
+                                @Model.TicketNumber
+                            </h5>
+
+                            <small class="text-muted">
+                                Ticket ID: #@Model.Id
+                            </small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+
+                            <span class="badge @statusClass fs-6">
+                                @statusLabel
+                            </span>
+
+                            <span class="badge @priorityClass fs-6">
+                                @Model.Priority
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="card-body p-4">
+
+                    <h4 class="fw-bold mb-3">
+                        @Model.Title
+                    </h4>
+
+                    <hr />
+
+                    <!-- TICKET METADATA -->
+                    <div class="row g-4 mb-4">
+
+                        <div class="col-md-4">
+                            <div class="detail-label">CATEGORY</div>
+                            <p class="detail-value">
+                                @Model.CategoryName
+                            </p>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="detail-label">CREATED BY</div>
+                            <p class="detail-value">
+                                @Model.CreatedByName
+                            </p>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="detail-label">CURRENT STATUS</div>
+                            <p class="detail-value">
+                                @statusLabel
+                            </p>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="detail-label">PRIORITY</div>
+                            <p class="detail-value">
+                                @Model.Priority
+                            </p>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="detail-label">CREATED AT</div>
+                            <p class="detail-value">
+                                @(Model.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm"))
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- ASSIGNED TECHNICIAN -->
+                    <h6 class="section-heading mb-3">
+                        Assigned Technician
+                    </h6>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.AssignedToName))
+                    {
+                        <div class="technician-card mb-4">
+
+                            <div class="d-flex align-items-center gap-3">
+
+                                <div class="technician-avatar">
+                                    &#128100;
+                                </div>
+
+                                <div class="flex-grow-1">
+
+                                    <div class="detail-label">
+                                        ASSIGNED IT SUPPORT
+                                    </div>
+
+                                    <div class="fw-bold text-dark">
+                                        @Model.AssignedToName
+                                    </div>
+
+                                    <small class="text-primary">
+                                        Responsible for handling this ticket
+                                    </small>
+
+                                </div>
+
+                                <span class="badge bg-primary">
+                                    Assigned
+                                </span>
+
+                            </div>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="unassigned-card mb-4">
+
+                            <div class="fw-bold text-warning-emphasis mb-1">
+                                Waiting for Technician Assignment
+                            </div>
+
+                            <small class="text-secondary">
+                                Tiket ini belum memiliki teknisi yang ditugaskan.
+                                Admin akan meninjau dan mengatur penanganannya.
+                            </small>
+
+                        </div>
+                    }
+
+                    <!-- TICKET PROGRESS -->
+                    <h6 class="section-heading mb-2">
+                        Ticket Progress
+                    </h6>
+
+                    <p class="text-muted small mb-0">
+                        Current progress of your IT support request.
+                    </p>
+
+                    <div class="progress-container mb-4">
+
+                        @for (int i = 0; i < progressSteps.Length; i++)
+                        {
+                            var stepNumber = i + 1;
+
+                            var stepClass = stepNumber < currentStep
+                                ? "completed"
+                                : stepNumber == currentStep
+                                    ? "current"
+                                    : "pending";
+
+                            <div class="progress-step @stepClass">
+
+                                <div class="progress-circle">
+
+                                    @if (stepNumber < currentStep)
+                                    {
+                                        <span>&#10003;</span>
+                                    }
+                                    else
+                                    {
+                                        @stepNumber
+                                    }
+
+                                </div>
+
+                                <div class="progress-label">
+                                    @progressSteps[i].Label
+                                </div>
+
+                                <div class="progress-description">
+                                    @progressSteps[i].Description
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+
+                    <hr />
+
+                    <!-- DESCRIPTION -->
+                    <div class="mb-2">
+
+                        <h6 class="section-heading mb-3">
+                            Problem Description
+                        </h6>
+
+                        <div class="description-box">
+                            @Model.Description
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- STATUS HISTORY -->
+            <div class="card detail-card shadow-sm mb-4">
+
+                <div class="card-header bg-white py-3 px-4">
+
+                    <h5 class="fw-bold mb-1">
+                        Status History
+                    </h5>
+
+                    <small class="text-muted">
+                        Record of ticket status changes
+                    </small>
+
+                </div>
+
+                <div class="card-body p-4">
+
+                    @if (Model.StatusHistories == null ||
+                         Model.StatusHistories.Count == 0)
+                    {
+                        <div class="text-center py-4">
+
+                            <h6 class="text-muted">
+                                No Status History
+                            </h6>
+
+                            <p class="text-muted small mb-0">
+                                There are no status records available.
+                            </p>
+
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var history in Model.StatusHistories)
+                        {
+                            var oldStatusLabel =
+                                history.OldStatus == TicketStatus.InProgress
+                                    ? "In Progress"
+                                    : history.OldStatus?.ToString() ?? "Created";
+
+                            var newStatusLabel =
+                                history.NewStatus == TicketStatus.InProgress
+                                    ? "In Progress"
+                                    : history.NewStatus.ToString();
+
+                            <div class="history-item">
+
+                                <div class="history-dot"></div>
+
+                                <div class="d-flex flex-column
+                                            flex-md-row justify-content-between gap-2">
+
+                                    <div>
+
+                                        <div class="fw-semibold">
+                                            @oldStatusLabel
+                                            <span class="text-muted mx-1">→</span>
+                                            @newStatusLabel
+                                        </div>
+
+                                        <div class="small text-muted mt-1">
+                                            Changed by @history.ChangedByName
+                                        </div>
+
+                                        @if (!string.IsNullOrWhiteSpace(history.Note))
+                                        {
+                                            <div class="small mt-2 text-secondary">
+                                                @history.Note
+                                            </div>
+                                        }
+
+                                    </div>
+
+                                    <small class="text-muted text-nowrap">
+                                        @(history.ChangedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm"))
+                                    </small>
+
+                                </div>
+
+                            </div>
+                        }
+                    }
+
+                </div>
+
+            </div>
+
+            <!-- COMMENTS AND INTERNAL NOTES -->
+            <div class="card detail-card shadow-sm mb-4">
+
+                <div class="card-header bg-white py-3 px-4">
+
+                    <h5 class="fw-bold mb-1">
+                        Comments and Notes
+                    </h5>
+
+                    <small class="text-muted">
+                        Discussion and ticket handling notes
+                    </small>
+
+                </div>
+
+                <div class="card-body p-4">
+
+                    @{
+                        var visibleComments = Model.Comments?
+                            .Where(c => !isEmployee || !c.IsInternal)
+                            .ToList();
+                    }
+
+                    <!-- EXISTING COMMENTS -->
+                    @if (visibleComments == null ||
+                         visibleComments.Count == 0)
+                    {
+                        <div class="text-center py-4">
+
+                            <h6 class="text-muted">
+                                No Comments Yet
+                            </h6>
+
+                            <p class="text-muted small mb-0">
+                                No comments have been added to this ticket.
+                            </p>
+
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var comment in visibleComments)
+                        {
+                            <div class="comment-item">
+
+                                <div class="d-flex flex-column
+                                            flex-md-row justify-content-between gap-2 mb-2">
+
+                                    <div>
+
+                                        <strong>
+                                            @comment.UserName
+                                        </strong>
+
+                                        @if (comment.IsInternal && !isEmployee)
+                                        {
+                                            <span class="badge bg-warning text-dark ms-2">
+                                                Internal Note
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-info text-dark ms-2">
+                                                Public Comment
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                    <small class="text-muted">
+                                        @(comment.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm"))
+                                    </small>
+
+                                </div>
+
+                                <div class="comment-content">
+                                    @comment.Content
+                                </div>
+
+                            </div>
+                        }
+                    }
+
+                    <hr class="my-4" />
+
+                    <!-- NEW COMMENT FORM -->
+                    @if (Model.Status == TicketStatus.Closed)
+                    {
+                        <div class="alert alert-secondary mb-0">
+                            This ticket is closed. New comments are no longer accepted.
+                        </div>
+                    }
+                    else
+                    {
+                        <form asp-controller="Tickets"
+                              asp-action="AddComment"
+                              asp-route-id="@Model.Id"
+                              method="post"
+                              class="comment-form">
+
+                            @Html.AntiForgeryToken()
+
+                            <h6 class="fw-bold mb-3">
+                                Add a Comment
+                            </h6>
+
+                            <div class="mb-3">
+
+                                <label class="form-label small fw-semibold">
+                                    Your Message
+                                </label>
+
+                                <textarea name="Content"
+                                          class="form-control"
+                                          rows="4"
+                                          maxlength="2000"
+                                          required
+                                          placeholder="Write your message here..."></textarea>
+
+                                <small class="text-muted">
+                                    Maximum 2000 characters.
+                                </small>
+
+                            </div>
+
+                            @if (canManageTickets)
+                            {
+                                <div class="form-check mb-3">
+
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="IsInternal"
+                                           value="true"
+                                           id="isInternal" />
+
+                                    <label class="form-check-label small fw-semibold"
+                                           for="isInternal">
+                                        Internal Note
+                                    </label>
+
+                                    <div class="text-muted small">
+                                        Only Admin and IT Support can see internal notes.
+                                    </div>
+
+                                </div>
+                            }
+
+                            <button type="submit"
+                                    class="btn btn-primary">
+
+                                <span class="me-1">&#10148;</span>
+                                Send Comment
+
+                            </button>
+
+                        </form>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="col-lg-4">
+
+            <!-- TICKET SUMMARY -->
+            <div class="card detail-card shadow-sm mb-4">
+
+                <div class="card-body p-4">
+
+                    <h6 class="fw-bold mb-3">
+                        Ticket Summary
+                    </h6>
+
+                    <div class="d-flex justify-content-between mb-3">
+
+                        <span class="text-muted small">
+                            Ticket Number
+                        </span>
+
+                        <strong class="small">
+                            @Model.TicketNumber
+                        </strong>
+
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-3">
+
+                        <span class="text-muted small">
+                            Category
+                        </span>
+
+                        <strong class="small">
+                            @Model.CategoryName
+                        </strong>
+
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-3">
+
+                        <span class="text-muted small">
+                            Priority
+                        </span>
+
+                        <span class="badge @priorityClass">
+                            @Model.Priority
+                        </span>
+
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-3">
+
+                        <span class="text-muted small">
+                            Status
+                        </span>
+
+                        <span class="badge @statusClass">
+                            @statusLabel
+                        </span>
+
+                    </div>
+
+                    <hr />
+
+                    <div class="detail-label mb-1">
+                        ASSIGNED TECHNICIAN
+                    </div>
+
+                    <div class="fw-semibold small">
+                        @(Model.AssignedToName ?? "Unassigned")
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- UPDATE STATUS -->
+            @await Html.PartialAsync("_TicketStatusUpdate", Model)
+
+            <!-- TICKET ACTIONS -->
+            <div class="card detail-card shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <h6 class="fw-bold mb-3">
+                        Ticket Actions
+                    </h6>
+
+                    @if (canEditTicket)
+                    {
+                        <a asp-action="Edit"
+                           asp-route-id="@Model.Id"
+                           class="btn btn-primary w-100 mb-2">
+                            Edit Ticket Information
+                        </a>
+                    }
+
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary w-100 mb-3">
+                        Back to Ticket List
+                    </a>
+
+                    @if (canManageTickets)
+                    {
+                        <hr />
+
+                        <form asp-action="Delete"
+                              asp-route-id="@Model.Id"
+                              method="post"
+                              onsubmit="return confirm('Are you sure you want to delete this ticket?');">
+
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit"
+                                    class="btn btn-outline-danger w-100">
+                                Delete Ticket
+                            </button>
+
+                        </form>
+
+                        <small class="text-muted d-block mt-2">
+                            Deleting a ticket will archive it from the active ticket list.
+                        </small>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

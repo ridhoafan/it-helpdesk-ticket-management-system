@@ -1,0 +1,159 @@
+
+@using ITHelpdesk.Web.DTOs.Tickets
+@using ITHelpdesk.Web.Models.Enums
+@model TicketDetailDto
+
+@{
+    var canManageTickets =
+        ViewBag.CanManageAllTickets is bool value && value;
+
+    TicketStatus? nextStatus = Model.Status switch
+    {
+        TicketStatus.Open => TicketStatus.InProgress,
+        TicketStatus.InProgress => TicketStatus.Resolved,
+        TicketStatus.Resolved => TicketStatus.Closed,
+        _ => null
+    };
+
+    var nextStatusLabel = nextStatus switch
+    {
+        TicketStatus.InProgress => "In Progress",
+        TicketStatus.Resolved => "Resolved",
+        TicketStatus.Closed => "Closed",
+        _ => string.Empty
+    };
+
+    var buttonLabel = nextStatus switch
+    {
+        TicketStatus.InProgress => "Start Working",
+        TicketStatus.Resolved => "Mark as Resolved",
+        TicketStatus.Closed => "Close Ticket",
+        _ => "Update Status"
+    };
+
+    var noteLabel = nextStatus switch
+    {
+        TicketStatus.Resolved => "Resolution Summary",
+        TicketStatus.Closed => "Closing Note (Optional)",
+        _ => "Progress Note (Optional)"
+    };
+
+    var notePlaceholder = nextStatus switch
+    {
+        TicketStatus.Resolved =>
+            "Explain how the problem was resolved and what actions were performed...",
+
+        TicketStatus.InProgress =>
+            "Describe the work being performed...",
+
+        TicketStatus.Closed =>
+            "Add a final closing note...",
+
+        _ => "Write a note..."
+    };
+
+    var isResolution = nextStatus == TicketStatus.Resolved;
+}
+
+@if (canManageTickets)
+{
+    <div class="card detail-card shadow-sm mt-4">
+
+        <div class="card-body p-4">
+
+            <h6 class="fw-bold mb-2">
+                Update Ticket Status
+            </h6>
+
+            <p class="text-muted small mb-3">
+                Update the ticket status as the support work progresses.
+            </p>
+
+            @if (nextStatus.HasValue)
+            {
+                <form asp-controller="Tickets"
+                      asp-action="UpdateStatus"
+                      asp-route-id="@Model.Id"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <!-- NEXT STATUS -->
+                    <div class="mb-3">
+
+                        <label class="form-label small fw-semibold">
+                            Next Status
+                        </label>
+
+                        <select name="newStatus"
+                                class="form-select"
+                                required>
+
+                            <option value="@nextStatus.Value">
+                                @nextStatusLabel
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- PROGRESS NOTE / RESOLUTION SUMMARY -->
+                    <div class="mb-3">
+
+                        <label class="form-label small fw-semibold"
+                               for="statusNote">
+
+                            @noteLabel
+
+                            @if (isResolution)
+                            {
+                                <span class="text-danger">*</span>
+                            }
+
+                        </label>
+
+                        <textarea id="statusNote"
+                                  name="note"
+                                  class="form-control"
+                                  rows="4"
+                                  maxlength="1000"
+                                  placeholder="@notePlaceholder"
+                                  required="@isResolution"></textarea>
+
+                        @if (isResolution)
+                        {
+                            <small class="text-muted d-block mt-2">
+                                This summary will automatically be saved
+                                as a public comment visible to Employee and Admin.
+                            </small>
+                        }
+                        else
+                        {
+                            <small class="text-muted d-block mt-2">
+                                Maximum 1000 characters.
+                            </small>
+                        }
+
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-primary w-100"
+                            onclick="return confirm('Update ticket status?')">
+
+                        @buttonLabel
+
+                    </button>
+
+                </form>
+            }
+            else
+            {
+                <div class="alert alert-success mb-0">
+                    This ticket has completed its status workflow.
+                </div>
+            }
+
+        </div>
+
+    </div>
+}

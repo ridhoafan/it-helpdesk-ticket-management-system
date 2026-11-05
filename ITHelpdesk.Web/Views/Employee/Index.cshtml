@@ -1,0 +1,483 @@
+
+@using ITHelpdesk.Web.Models.Enums
+@model ITHelpdesk.Web.DTOs.Dashboard.DashboardSummaryDto
+
+@{
+    ViewData["Title"] = "My Helpdesk";
+}
+
+<style>
+    .employee-portal {
+        color: #1e293b;
+    }
+
+    .welcome-section {
+        background: linear-gradient(120deg, #1e3a8a, #2563eb);
+        border-radius: 14px;
+        padding: 30px;
+        color: white;
+        margin-bottom: 25px;
+    }
+
+    .welcome-section h2 {
+        font-size: 25px;
+        font-weight: 700;
+        margin-bottom: 9px;
+    }
+
+    .welcome-section p {
+        color: #dbeafe;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .create-ticket-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 17px;
+        background: white;
+        color: #1d4ed8;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 700;
+        transition: all 0.2s;
+    }
+
+    .create-ticket-button:hover {
+        background: #eff6ff;
+        color: #1d4ed8;
+        transform: translateY(-1px);
+    }
+
+    .employee-stat-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 21px;
+        height: 100%;
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 12px;
+    }
+
+    .stat-value {
+        font-size: 29px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .stat-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 19px;
+    }
+
+    .icon-blue {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .icon-orange {
+        background: #ffedd5;
+        color: #c2410c;
+    }
+
+    .icon-green {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .section-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .section-header {
+        padding: 19px 21px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .section-header h5 {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .section-header p {
+        color: #64748b;
+        font-size: 12px;
+        margin: 5px 0 0;
+    }
+
+    .view-all-link {
+        color: #2563eb;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .view-all-link:hover {
+        text-decoration: underline;
+    }
+
+    .ticket-list-item {
+        padding: 18px 21px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+    }
+
+    .ticket-list-item:last-child {
+        border-bottom: none;
+    }
+
+    .ticket-list-item:hover {
+        background: #f8fafc;
+    }
+
+    .ticket-title {
+        color: #1e293b;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .ticket-meta {
+        color: #94a3b8;
+        font-size: 11px;
+    }
+
+    .ticket-assignee {
+        color: #64748b;
+        font-size: 11px;
+        margin-top: 7px;
+    }
+
+    .ticket-assignee strong {
+        color: #334155;
+        font-weight: 700;
+    }
+
+    .ticket-status {
+        display: inline-block;
+        border-radius: 20px;
+        padding: 5px 10px;
+        font-size: 10px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .status-open {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .status-inprogress {
+        background: #ffedd5;
+        color: #9a3412;
+    }
+
+    .status-resolved {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-closed {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 45px 20px;
+    }
+
+    .empty-state-icon {
+        font-size: 35px;
+        margin-bottom: 12px;
+    }
+
+    .empty-state h5 {
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 7px;
+    }
+
+    .empty-state p {
+        color: #64748b;
+        font-size: 12px;
+        margin-bottom: 18px;
+    }
+
+    .help-information {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 12px;
+        padding: 19px;
+        margin-top: 22px;
+    }
+
+    .help-information h6 {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1e40af;
+        margin-bottom: 8px;
+    }
+
+    .help-information p {
+        font-size: 12px;
+        color: #1e40af;
+        margin: 0;
+        line-height: 1.7;
+    }
+
+    @@media (max-width: 576px) {
+        .welcome-section {
+            padding: 23px;
+        }
+
+        .welcome-section h2 {
+            font-size: 21px;
+        }
+
+        .ticket-list-item {
+            align-items: flex-start;
+        }
+    }
+</style>
+
+<div class="employee-portal">
+
+    <!-- WELCOME SECTION -->
+    <section class="welcome-section">
+
+        <h2>
+            Halo, @User.Identity?.Name!
+        </h2>
+
+        <p>
+            Selamat datang di IT Helpdesk.
+            Ada masalah dengan komputer, jaringan, atau aplikasi?
+            Laporkan kepada tim IT melalui portal ini.
+        </p>
+
+        <a asp-controller="Tickets"
+           asp-action="Create"
+           class="create-ticket-button">
+
+            <span>+</span>
+            Buat Laporan Baru
+
+        </a>
+
+    </section>
+
+    <!-- TICKET STATISTICS -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-6 col-lg-3">
+            <div class="employee-stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="stat-label">Total Tiket Saya</div>
+                    <div class="stat-icon icon-blue">&#128203;</div>
+                </div>
+
+                <div class="stat-value">
+                    @Model.TotalTickets
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <div class="employee-stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="stat-label">Menunggu</div>
+                    <div class="stat-icon icon-orange">&#9203;</div>
+                </div>
+
+                <div class="stat-value">
+                    @Model.OpenTickets
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <div class="employee-stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="stat-label">Sedang Dikerjakan</div>
+                    <div class="stat-icon icon-blue">&#128736;</div>
+                </div>
+
+                <div class="stat-value">
+                    @Model.InProgressTickets
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <div class="employee-stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="stat-label">Selesai</div>
+                    <div class="stat-icon icon-green">&#10003;</div>
+                </div>
+
+                <div class="stat-value">
+                    @(Model.ResolvedTickets + Model.ClosedTickets)
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- RECENT TICKETS -->
+    <section class="section-card">
+
+        <div class="section-header">
+
+            <div>
+                <h5>Laporan Terbaru Saya</h5>
+                <p>
+                    Pantau perkembangan laporan yang sudah kamu buat.
+                </p>
+            </div>
+
+            <a asp-controller="Tickets"
+               asp-action="Index"
+               class="view-all-link">
+                Lihat Semua
+            </a>
+
+        </div>
+
+        @if (Model.RecentTickets.Any())
+        {
+            @foreach (var ticket in Model.RecentTickets)
+            {
+                var statusClass = ticket.Status switch
+                {
+                    TicketStatus.Open => "status-open",
+                    TicketStatus.InProgress => "status-inprogress",
+                    TicketStatus.Resolved => "status-resolved",
+                    TicketStatus.Closed => "status-closed",
+                    _ => "status-open"
+                };
+
+                var statusLabel = ticket.Status switch
+                {
+                    TicketStatus.Open => "Menunggu",
+                    TicketStatus.InProgress => "Sedang Dikerjakan",
+                    TicketStatus.Resolved => "Selesai",
+                    TicketStatus.Closed => "Ditutup",
+                    _ => ticket.Status.ToString()
+                };
+
+                <a asp-controller="Tickets"
+                   asp-action="Details"
+                   asp-route-id="@ticket.Id"
+                   class="text-decoration-none">
+
+                    <div class="ticket-list-item">
+
+                        <div class="flex-grow-1">
+
+                            <div class="ticket-title">
+                                @ticket.Title
+                            </div>
+
+                            <div class="ticket-meta">
+                                @ticket.TicketNumber
+                                &bull;
+                                @ticket.CategoryName
+                                &bull;
+                                @ticket.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy")
+                            </div>
+
+                            <div class="ticket-assignee">
+
+                                @if (!string.IsNullOrWhiteSpace(ticket.AssignedToName))
+                                {
+                                    <span>
+                                        Ditangani oleh:
+                                        <strong>@ticket.AssignedToName</strong>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>
+                                        Belum ada teknisi yang ditugaskan
+                                    </span>
+                                }
+
+                            </div>
+
+                        </div>
+
+                        <span class="ticket-status @statusClass">
+                            @statusLabel
+                        </span>
+
+                    </div>
+
+                </a>
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+
+                <div class="empty-state-icon">
+                    &#128203;
+                </div>
+
+                <h5>Belum Ada Laporan</h5>
+
+                <p>
+                    Kamu belum membuat laporan masalah IT.
+                    Buat laporan pertama agar tim IT dapat membantu.
+                </p>
+
+                <a asp-controller="Tickets"
+                   asp-action="Create"
+                   class="btn btn-primary btn-sm">
+                    Buat Laporan
+                </a>
+
+            </div>
+        }
+
+    </section>
+
+    <!-- HELP INFORMATION -->
+    <section class="help-information">
+
+        <h6>Butuh Bantuan?</h6>
+
+        <p>
+            Pilih tombol "Buat Laporan Baru" jika mengalami
+            masalah dengan perangkat, jaringan internet,
+            printer, akun, atau aplikasi perusahaan.
+            Tim IT akan memeriksa laporan dan memberikan
+            informasi perkembangan melalui sistem ini.
+        </p>
+
+    </section>
+
+</div>

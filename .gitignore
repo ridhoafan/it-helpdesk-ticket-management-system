@@ -1,0 +1,70 @@
+# Build outputs
+**/bin/
+**/obj/
+**/out/
+
+# Exercise project - excluded from GitHub
+ITHelpdesk.Console/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# .NET temporary files
+*.cache
+*.log
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Local environment configuration
+.env
+.env.*
+!.env.example
+
+# Development-specific application settings
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.*.local.json
+
+# User secrets and credentials
+secrets.json
+secrets.*.json
+*credentials*.json
+*.publishsettings
+**/PublishProfiles/
+
+# Certificates and private keys
+*.pfx
+*.p12
+*.key
+*.pem
+
+# Local databases and backups
+*.mdf
+*.ldf
+*.bak
+*.db
+*.sqlite
+*.sqlite3
+test-database.sql
+
+# Package and test outputs
+TestResults/
+coverage/
+coverage.*
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
