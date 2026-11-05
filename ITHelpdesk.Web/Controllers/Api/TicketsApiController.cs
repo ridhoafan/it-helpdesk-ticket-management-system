@@ -127,6 +127,119 @@ public class TicketsApiController : ControllerBase
     }
 
     // ==========================================
+    // GET: api/tickets/1/comments
+    // Retrieve comments for an accessible ticket
+    // ==========================================
+
+    [HttpGet("{id:int}/comments")]
+    public async Task<IActionResult> GetComments(int id)
+    {
+        if (id <= 0)
+        {
+            return BadRequest(new
+            {
+                message = "Ticket ID must be greater than zero."
+            });
+        }
+
+        if (string.IsNullOrWhiteSpace(GetCurrentUserId()))
+        {
+            return Unauthorized();
+        }
+
+        var ticket = await _ticketService.GetByIdAsync(
+            id,
+            GetCreatedByFilter(),
+            GetAssignedToFilter()
+        );
+
+        if (ticket == null)
+        {
+            return NotFound(new
+            {
+                message = "Ticket not found."
+            });
+        }
+
+        var comments = IsEmployeeOnly
+            ? ticket.Comments.Where(comment => !comment.IsInternal).ToList()
+            : ticket.Comments;
+
+        return Ok(comments);
+    }
+
+    // ==========================================
+    // POST: api/tickets/1/comments
+    // Add a public comment or authorized internal note
+    // ==========================================
+
+    [HttpPost("{id:int}/comments")]
+    public async Task<IActionResult> AddComment(
+        int id,
+        [FromBody] CreateTicketCommentDto dto)
+    {
+        if (id <= 0)
+        {
+            return BadRequest(new
+            {
+                message = "Ticket ID must be greater than zero."
+            });
+        }
+
+        var userId = GetCurrentUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var added = await _ticketService.AddCommentAsync(
+                id,
+                dto,
+                userId,
+                IsAdmin,
+                User.IsInRole("IT Support"),
+                GetClientIpAddress()
+            );
+
+            if (!added)
+            {
+                return NotFound(new
+                {
+                    message = "Ticket not found or you do not have access to it."
+                });
+            }
+
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+            when (ex.Message == "You are not authorized to create internal notes."
+                || ex.Message == "User was not found or is not authorized.")
+        {
+            return StatusCode(
+                StatusCodes.Status403Forbidden,
+                new { message = ex.Message }
+            );
+        }
+        catch (InvalidOperationException ex)
+            when (ex.Message == "Comments cannot be added to a closed ticket.")
+        {
+            return Conflict(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
+    }
+
+    // ==========================================
     // POST: api/tickets
     // Create a new ticket
     // ==========================================
